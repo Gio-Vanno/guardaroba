@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2f3e46">
+<title>Guardaroba</title>
+<style>
+:root{--bg:#f3efe8;--card:#fffdf9;--ink:#1f2a30;--mute:#6b747a;--acc:#2f3e46;--acc2:#b5543c;--line:#ddd6ca;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#161b1e;--card:#1f2629;--ink:#ece8e1;--mute:#98a1a6;--acc:#8fb0bf;--acc2:#e0856c;--line:#33393d;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Georgia,"Times New Roman",serif;padding:env(safe-area-inset-top) 0 calc(72px + env(safe-area-inset-bottom))}
+h1,h2,button,input,select,textarea,nav{font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+header{padding:18px 16px 6px}
+h1{font-size:26px;margin:0;font-weight:700;letter-spacing:-.5px}
+main{padding:8px 16px;max-width:720px;margin:0 auto}
+nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--card);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;padding:14px 4px;border:0;background:none;color:var(--mute);font-size:15px}
+nav button.on{color:var(--acc2);font-weight:700}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
+.item{background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.item img{width:100%;aspect-ratio:1;object-fit:cover;display:block}
+.item div{padding:8px;font-size:13px}
+.item b{display:block;font-size:14px}
+.item small{color:var(--mute)}
+.item button{margin-top:6px;border:0;background:none;color:var(--acc2);padding:0;font-size:13px}
+label{display:block;font-size:14px;color:var(--mute);margin:12px 0 4px}
+input,select,textarea{width:100%;padding:11px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);font-size:16px}
+.btn{width:100%;margin-top:16px;padding:14px;border:0;border-radius:8px;background:var(--acc);color:var(--bg);font-size:16px;font-weight:600}
+.btn.sec{background:none;border:1px solid var(--line);color:var(--ink)}
+#prev{max-width:100%;max-height:220px;border-radius:8px;margin-top:10px;display:none}
+.out{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin-top:16px;white-space:pre-wrap}
+.item .go{display:block;margin-top:8px;width:100%;padding:8px;border-radius:6px;background:var(--acc);color:var(--bg);font-weight:600}
+.item .go+button{margin-top:8px}
+#base{display:none;align-items:center;gap:12px;background:var(--card);border:1px solid var(--acc2);border-radius:10px;padding:8px;margin-top:8px}
+#base img{width:64px;height:64px;object-fit:cover;border-radius:6px}
+#base span{flex:1;font-size:14px}
+#base button{border:0;background:none;color:var(--acc2);font-size:14px}
+.empty{color:var(--mute);padding:30px 0;text-align:center}
+.hide{display:none}
+</style>
+</head>
+<body>
+<header><h1>Guardaroba</h1></header>
+<main>
+ <section id="t-capi">
+  <button class="btn" id="compra">Cosa comprare?</button>
+  <div class="out hide" id="compraout"></div>
+  <div id="count" class="empty"></div>
+  <div class="grid" id="grid"></div>
+ </section>
+
+ <section id="t-nuovo" class="hide">
+  <label>Foto del capo</label>
+  <input type="file" id="file" accept="image/*">
+  <img id="prev" alt="Anteprima">
+  <label>Nome</label><input id="nome" placeholder="Camicia di lino">
+  <label>Categoria</label>
+  <select id="cat"><option>T-shirt</option><option>Maglione</option><option>Felpa</option><option>Maglia da calcio</option><option>Camicia</option><option>Pantaloni</option><option>Gonna</option><option>Vestito</option><option>Giacca</option><option>Cappotto</option><option>Scarpe</option><option>Accessorio</option></select>
+  <label>Colore</label><input id="col" placeholder="blu navy">
+  <label>Tag (separati da virgola)</label><input id="tag" placeholder="formale, estate, slim fit, cotone">
+  <label>Descrizione (modificabile)</label>
+  <textarea id="desc" rows="3" placeholder="La scrive l'IA, oppure scrivila tu"></textarea>
+  <button class="btn sec" id="descrivi">Descrivi con IA</button>
+  <button class="btn" id="salva">Salva capo</button>
+ </section>
+
+ <section id="t-abbina" class="hide">
+  <div id="base"><img id="baseimg" alt=""><span id="basetxt"></span><button id="basedel">Rimuovi</button></div>
+  <label>Contesto</label>
+  <select id="ctx"><option>Lavoro</option><option>Tempo libero</option><option>Appuntamento</option><option>Discoteca</option></select>
+  <label>Momento</label>
+  <select id="mom"><option>Giorno</option><option>Sera</option><option>Notte</option></select>
+  <label>Temperatura</label>
+  <select id="temp"><option>Non specificata</option><option>Caldo (oltre 25°C)</option><option>Mite (15-25°C)</option><option>Fresco (8-15°C)</option><option>Freddo (sotto 8°C)</option></select>
+  <label>Stile</label>
+  <select id="stile"><option>Nessuna preferenza</option><option>Preppy</option><option>Streetwear</option><option>Sportivo</option><option>Casual</option><option>Minimal</option></select>
+  <label>Altre richieste (facoltativo)</label>
+  <textarea id="occ" rows="3" placeholder="12°C, pioggia, voglio sembrare più alto"></textarea>
+  <label>Cosa invio all'IA</label>
+  <select id="modo"><option value="testo">Solo testo (risparmio)</option><option value="foto">Con foto (più preciso)</option></select>
+  <label style="display:flex;gap:8px;align-items:center;color:var(--ink)"><input type="checkbox" id="ruota" checked style="width:auto"> Ruota l'armadio (evita i capi indossati di recente)</label>
+  <button class="btn" id="chiedi">Suggerisci outfit</button>
+  <div class="out hide" id="out"></div>
+  <div id="worn"></div>
+ </section>
+
+ <section id="t-opz" class="hide">
+  <label>API key Gemini (gratuita da aistudio.google.com/apikey)</label>
+  <input id="key" type="password" autocomplete="off">
+  <label>Modello</label><input id="model" value="gemini-2.5-flash">
+  <label>Misure e preferenze (opzionale)</label>
+  <textarea id="prof" rows="3" placeholder="Altezza 175 cm, spalle larghe, carnagione chiara, stile minimal"></textarea>
+  <label>Master prompt (istruzioni dello stylist)</label>
+  <textarea id="master" rows="9"></textarea>
+  <button class="btn sec" id="resetmaster">Ripristina master prompt di base</button>
+  <label>Knowledge base (regole e riassunti di manuali)</label>
+  <textarea id="kb" rows="12"></textarea>
+  <input type="file" id="kbfile" accept=".txt,.md,text/plain,text/markdown" multiple style="margin-top:8px">
+  <p id="kbinfo" style="color:var(--mute);font-size:13px;margin:6px 0 0"></p>
+  <button class="btn sec" id="resetkb">Ripristina knowledge base di base</button>
+  <button class="btn" id="salvaopz">Salva impostazioni</button>
+  <button class="btn sec" id="azzera">Azzera cronologia capi indossati</button>
+  <button class="btn sec" id="batch">Descrivi i capi senza descrizione</button>
+  <button class="btn sec" id="export">Esporta backup (JSON)</button>
+  <label>Importa backup (.json)</label>
+  <input type="file" id="import" accept=".json,application/json">
+  <p style="color:var(--mute);font-size:13px">Foto e chiave restano solo su questo dispositivo. Le foto vengono inviate a Google solo quando chiedi un abbinamento.</p>
+ </section>
+</main>
+<nav>
+ <button data-t="capi" class="on">Capi</button>
+ <button data-t="nuovo">Aggiungi</button>
+ <button data-t="abbina">Abbina</button>
+ <button data-t="opz">Impostazioni</button>
+</nav>
+
+<script>
+const $=s=>document.querySelector(s);
+let db, items=[], img64=null;
+
+function open(){return new Promise((res,rej)=>{const r=indexedDB.open("guardaroba",1);r.onupgradeneeded=()=>r.result.createObjectStore("capi",{keyPath:"id",autoIncrement:true});r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
+function tx(mode){return db.transaction("capi",mode).objectStore("capi")}
+function all(){return new Promise(r=>{const q=tx("readonly").getAll();q.onsuccess=()=>r(q.result)})}
+function put(o){return new Promise(r=>{const q=tx("readwrite").add(o);q.onsuccess=()=>r(q.result)})}
+function clearAll(){return new Promise(r=>{const q=tx("readwrite").clear();q.onsuccess=()=>r()})}
+function upd(o){return new Promise(r=>{const q=tx("readwrite").put(o);q.onsuccess=()=>r()})}
+function del(id){return new Promise(r=>{const q=tx("readwrite").delete(id);q.onsuccess=()=>r()})}
+function ls(k,v){try{if(v===undefined)return localStorage.getItem(k)||"";localStorage.setItem(k,v)}catch(e){return ""}}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+
+function resize(file,max=512){return new Promise((res,rej)=>{
+ const im=new Image();const u=URL.createObjectURL(file);
+ im.onload=()=>{const k=Math.min(1,max/Math.max(im.width,im.height));const c=document.createElement("canvas");c.width=im.width*k;c.height=im.height*k;c.getContext("2d").drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);res(c.toDataURL("image/jpeg",.75))};
+ im.onerror=rej;im.src=u})}
+
+async function render(){
+ items=await all();
+ $("#count").textContent=items.length?"":"Nessun capo. Vai su Aggiungi per caricare il primo.";
+ $("#grid").innerHTML=items.map(i=>`<div class="item"><img src="${i.img}" alt=""><div><b>${esc(i.nome)}</b>${esc(i.cat)}, ${esc(i.col)}<br><small>${esc(i.tag)}</small><button class="go" data-base="${i.id}">Crea outfit</button><button data-desc="${i.id}">${i.desc?"Descrizione":"Aggiungi descrizione"}</button> <button data-del="${i.id}">Elimina</button></div></div>`).join("");
+}
+
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
+ document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("on",x===b));
+ ["capi","nuovo","abbina","opz"].forEach(t=>$("#t-"+t).classList.toggle("hide",t!==b.dataset.t));
+});
+let baseId=null;
+function showBase(){
+ const b=items.find(i=>i.id===baseId);
+ if(!b){baseId=null;$("#base").style.display="none";return}
+ $("#baseimg").src=b.img;$("#basetxt").textContent="Capo di partenza: "+b.nome;$("#base").style.display="flex";
+}
+$("#basedel").onclick=()=>{baseId=null;showBase()};
+$("#grid").onclick=async e=>{
+ const did=e.target.dataset.desc;
+ if(did){const i=items.find(x=>x.id===+did);const t=prompt("Descrizione del capo:",i.desc||"");if(t!==null){i.desc=t.trim();await upd(i);render()}return}
+ const bid=e.target.dataset.base;
+ if(bid){baseId=+bid;showBase();document.querySelector('nav [data-t="abbina"]').click();return}
+ const id=e.target.dataset.del;
+ if(id&&confirm("Eliminare questo capo?")){await del(+id);render()}
+};
+
+$("#file").onchange=async e=>{
+ const f=e.target.files[0];if(!f)return;
+ img64=await resize(f);$("#prev").src=img64;$("#prev").style.display="block";
+};
+$("#salva").onclick=async()=>{
+ if(!img64||!$("#nome").value.trim()){alert("Servono almeno foto e nome.");return}
+ let desc=$("#desc").value.trim();
+ if(!desc&&ls("key")){const b=$("#salva");b.disabled=true;b.textContent="Descrivo...";try{desc=await describe(img64,$("#nome").value,$("#cat").value)}catch(e){}b.disabled=false;b.textContent="Salva capo"}
+ await put({img:img64,nome:$("#nome").value.trim(),cat:$("#cat").value,col:$("#col").value.trim(),tag:$("#tag").value.trim(),desc});
+ img64=null;["#nome","#col","#tag","#file","#desc"].forEach(s=>$(s).value="");$("#prev").style.display="none";
+ await render();document.querySelector('nav [data-t="capi"]').click();
+};
+
+async function gem(parts,sys){
+ const key=ls("key"),model=ls("model")||"gemini-2.5-flash";
+ if(!key)throw new Error("Inserisci la API key in Impostazioni.");
+ const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,{method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":key},body:JSON.stringify(sys?{system_instruction:{parts:[{text:sys}]},contents:[{role:"user",parts}]}:{contents:[{role:"user",parts}]})});
+ const d=await r.json();
+ if(!r.ok)throw new Error(d.error?.message||r.status);
+ return (d.candidates?.[0]?.content?.parts||[]).map(p=>p.text||"").join("").trim();
+}
+function describe(im,nome,cat){
+ return gem([{text:`Descrivi in italiano questo capo (${cat}${nome?": "+nome:""}) in modo fattuale e compatto, in massimo 45 parole, sempre in questo ordine: tipo e taglio; colore preciso con sottotono (caldo, freddo o neutro); tessuto probabile e peso (leggero, medio, pesante); vestibilità; lunghezza; motivo; dettagli visibili (colletto, tasche, chiusure, logo); formalità (bassa, media, alta); stagione. Nessun giudizio estetico (bello, elegante) e nessuna ripetizione di ovvietà. Scrivi solo ciò che si vede: se non sei sicuro di un dettaglio, omettilo. Solo la descrizione, in un'unica frase continua, senza introduzione.`},{inline_data:{mime_type:"image/jpeg",data:im.split(",")[1]}}]);
+}
+$("#descrivi").onclick=async()=>{
+ if(!img64){alert("Scegli prima una foto.");return}
+ const b=$("#descrivi");b.disabled=true;b.textContent="Descrivo...";
+ try{$("#desc").value=await describe(img64,$("#nome").value,$("#cat").value)}catch(e){alert("Errore: "+e.message)}
+ b.disabled=false;b.textContent="Descrivi con IA";
+};
+$("#batch").onclick=async()=>{
+ const todo=items.filter(i=>!i.desc);
+ if(!todo.length){alert("Tutti i capi hanno già una descrizione.");return}
+ const b=$("#batch");b.disabled=true;let n=0;
+ try{for(const i of todo){b.textContent=`Descrivo ${++n}/${todo.length}...`;i.desc=await describe(i.img,i.nome,i.cat);await upd(i);await new Promise(r=>setTimeout(r,1500))}}
+ catch(e){alert("Interrotto: "+e.message)}
+ b.disabled=false;b.textContent="Descrivi i capi senza descrizione";render();
+};
+const DEF_MASTER=`Sei uno stylist personale esperto di moda, con gusto contemporaneo e pratico. Lavori solo con i capi del guardaroba dell'utente: non inventare capi che non esistono e, se manca un pezzo chiave, segnalalo in una riga.
+
+Priorità, in ordine:
+1. Adeguatezza a contesto, momento della giornata, meteo e stile richiesto.
+2. Armonia di colore e proporzioni secondo la base di conoscenza.
+3. Varietà: tre outfit chiaramente diversi tra loro.
+4. Praticità: outfit che l'utente può indossare davvero.
+
+Per ogni outfit indica i capi per strati (base, intermedio, esterno, parte inferiore, scarpe) con numero e nome, perché funziona (colore e proporzioni, in una o due frasi) e un accessorio o una variante facoltativa. Tono diretto e concreto, niente elogi generici. Rispondi in italiano e resta sotto le 250 parole.`;
+const DEF_LAYER=`LAYERING (STRATIFICAZIONE)
+- Tre strati: base (T-shirt, camicia, maglia a contatto con la pelle), intermedio (maglione, felpa, camicia sopra una T-shirt, gilet), esterno (giacca, cappotto, bomber, overshirt). Non servono sempre tutti: il numero dipende dalla temperatura.
+- Temperatura: caldo (oltre 25°C) un solo strato, al massimo una camicia leggera aperta; mite (15-25°C) uno o due strati; fresco (8-15°C) due o tre strati; freddo (sotto 8°C) tre strati con maglione o felpa e capospalla pesante.
+- Spessore crescente dall'interno verso l'esterno: lo strato esterno deve contenere quelli sotto senza stringere (una giacca slim non sta bene sopra un maglione pesante).
+- Lunghezze: ogni strato sporge dall'altro di 2-5 cm (la T-shirt un po' più lunga del maglione, il maglione più lungo della giacca corta) per creare linee orizzontali visibili, oppure tutti allineati in modo netto. Evita differenze casuali di 1 cm.
+- Volumi: lo strato esterno è più ampio di quello interno. Se l'esterno è oversize, il resto è aderente o regular.
+- Colore: lo strato esterno è il più scuro o neutro, quello intermedio porta il colore o il contrasto, quello base resta chiaro o neutro vicino al viso. Tono su tono per allungare, contrasto netto per dare struttura.
+- Colletti e scolli: variare lo scollo tra gli strati (girocollo sotto, colletto della camicia fuori dal maglione, T-shirt sotto una camicia aperta).
+- Combinazioni collaudate: T-shirt + camicia aperta + giacca; camicia + maglione + cappotto; T-shirt + felpa + bomber; polo + cardigan (preppy); felpa con cappuccio sotto cappotto (attenzione al cappuccio sul colletto).
+- Un solo capo protagonista per outfit; gli altri strati restano di supporto.
+- Lo strato intermedio deve stare bene anche da solo, per quando si toglie il capospalla al chiuso.`;
+const DEF_KB0=`RUOTA DEI COLORI
+- Monocromatico: toni diversi dello stesso colore (chiaro, medio, scuro). Sempre elegante, ottimo per il minimal.
+- Analoghi: colori vicini sulla ruota (blu e verde, rosso e arancio). Armonia morbida.
+- Complementari: opposti sulla ruota (blu/arancio, viola/giallo, rosso/verde). Forte contrasto: uno domina, l'altro compare solo in piccoli dettagli.
+- Regola 60-30-10: 60% colore base, 30% secondario, 10% accento.
+- Neutri (nero, bianco, grigio, beige, blu navy, marrone, kaki, denim) si abbinano a quasi tutto. Massimo 3 colori non neutri per outfit.
+- Non mescolare molti colori caldi e freddi senza un neutro che faccia da ponte.
+- Nero con marrone è un abbinamento difficile: evitarlo salvo contrasto voluto. Navy con nero funziona se i materiali sono diversi.
+
+SOTTOTONI DELLA PELLE
+- Caldo (vene verdastre, dona l'oro): terra, cammello, oliva, senape, corallo, crema.
+- Freddo (vene bluastre, dona l'argento): blu, grigio, bordeaux, verde smeraldo, bianco ottico.
+- Neutro: dona quasi tutto, evitare gli estremi.
+- Il colore vicino al viso conta di più: scegli la parte superiore in base al sottotono.
+
+PROPORZIONI
+- Volumi: largo sopra con stretto sotto, o viceversa. Largo con largo solo se voluto (streetwear).
+- Regola dei terzi: dividere la figura in 1/3 e 2/3 (maglia infilata o accorciata, vita alta) è più armonioso della divisione a metà.
+- Per sembrare più alti: tono su tono dall'alto al basso, vita alta, pantaloni dritti che sfiorano la scarpa, giacche corte.
+- Spalle larghe: scollo a V e capi morbidi sopra. Spalle strette: più volume sopra e giacche strutturate.
+- Lunghezze: la giacca arriva a metà del cavallo, il polsino della camicia sporge di circa 1 cm, il pantalone sfiora la scarpa o fa una piccola piega.
+
+MATERIALI E STAGIONI
+- Primavera/estate: cotone, lino, jersey leggero, colori chiari. Autunno/inverno: lana, felpa, denim pesante, colori profondi.
+- Non mischiare materiali di formalità opposta (giacca da abito con felpa tecnica) senza una scelta consapevole.
+- Texture diverse rendono interessante un outfit monocolore.
+
+MOTIVI
+- Un solo capo vistoso per outfit. Due motivi solo se di scala diversa e con un colore in comune.
+- Righe, quadri e stampe devono riprendere colori già presenti nel resto dell'outfit.
+
+CONTESTO
+- Lavoro: capi puliti, colori sobri, niente loghi grandi.
+- Tempo libero: comodità, scarpe casual o sneakers.
+- Appuntamento: curato ma rilassato, un capo di qualità in evidenza.
+- Discoteca e notte: contrasto più forte, colori scuri o un solo accento, tessuti con carattere.
+- Scarpe e cintura coerenti per colore e formalità.
+
+STILI
+- Preppy: camicie button-down, polo, maglioni, chino, mocassini; navy, bianco, bordeaux.
+- Streetwear: felpe e t-shirt oversize, pantaloni larghi o cargo, sneakers vistose.
+- Sportivo: capi tecnici e comodi, tute, maglie da calcio, scarpe da ginnastica.
+- Casual: jeans, t-shirt, felpe, sneakers; semplice e versatile.
+- Minimal: pochi colori neutri, linee pulite, niente loghi.`;
+const DEF_KB=DEF_KB0+"\n\n"+DEF_LAYER;
+function lsn(k,d){try{const v=localStorage.getItem(k);return v===null?d:v}catch(e){return d}}
+function kbInfo(){const n=Math.round($("#kb").value.length/4);$("#kbinfo").textContent="Circa "+n+" token inviati a ogni richiesta"+(n>15000?". Sono tanti: consumano molta quota gratuita, meglio riassumere.":".")}
+$("#kb").oninput=kbInfo;
+$("#kbfile").onchange=async e=>{
+ for(const f of e.target.files){const t=await f.text();$("#kb").value+=($("#kb").value?"\n\n":"")+"### "+f.name+"\n"+t}
+ e.target.value="";kbInfo();
+};
+$("#resetmaster").onclick=()=>{if(confirm("Ripristinare il master prompt di base?"))$("#master").value=DEF_MASTER};
+$("#resetkb").onclick=()=>{if(confirm("Ripristinare la knowledge base di base?")){$("#kb").value=DEF_KB;kbInfo()}};
+$("#compra").onclick=async()=>{
+ const out=$("#compraout"),b=$("#compra");
+ if(items.length<5){alert("Servono almeno 5 capi per un'analisi sensata.");return}
+ if(!ls("key")){alert("Inserisci la API key in Impostazioni.");return}
+ b.disabled=true;b.textContent="Analizzo il guardaroba...";out.classList.remove("hide");out.textContent="";
+ const kbt=lsn("kb",DEF_KB).trim();
+ const sys=lsn("master",DEF_MASTER)+(kbt?"\n\nBASE DI CONOSCENZA (usala come riferimento principale):\n"+kbt:"");
+ const lista=items.slice(0,150).map((i,n)=>`#${n+1} ${i.nome} (${i.cat}, ${i.col}; tag: ${i.tag})${i.desc?". "+i.desc:""}`).join("\n");
+ const stile=$("#stile").value;
+ const prompt="Analizza l'intero guardaroba qui sotto e consiglia UN acquisto a massima priorità. La priorità è la versatilità: scegli il capo che si abbina al maggior numero di capi già presenti e sblocca più nuovi outfit completi possibili, valutando colore, sottotono, formalità, stagione, proporzioni e le lacune per categoria (se manca una categoria di base o uno strato per il layering, cioè intermedio o capospalla, tienine conto). Il capo può essere di qualsiasi categoria (cappotto, pantaloni, felpa, maglione, scarpe, giacca, camicia ecc.). Evita doppioni di capi già posseduti con colore e taglio simili."
+ +"\n\nRispondi esattamente in questo formato:\nACQUISTO PRIORITARIO: categoria e tipo di capo\nColore: ...\nVestibilità: una tra regular, slim, straight, baggy, oversize, relaxed, wide leg (o l'equivalente adatto alla categoria), con una frase su come veste\nMateriale e lunghezza: ...\nPerché è la priorità: 2-3 frasi, indicando le lacune che colma\nSi abbina a: i capi principali con numero e nome, e una stima di quanti nuovi outfit completi sblocca\n\nPoi ALTERNATIVE: altri 2 acquisti in ordine di priorità, una riga ciascuno con colore e vestibilità. Se il guardaroba è troppo scarso per giudicare, dillo. Niente elogi generici, massimo 250 parole."
+ +"\n\nProfilo: "+(ls("prof")||"non indicato")+(stile!=="Nessuna preferenza"?"\nStile preferito: "+stile:"")+"\n\nGuardaroba:\n"+lista;
+ try{const t=await gem([{text:prompt}],sys);out.innerHTML=esc(t||"Nessuna risposta.").replace(/\*\*(.+?)\*\*/g,"<b>$1</b>")}
+ catch(e){out.textContent="Errore: "+e.message}
+ b.disabled=false;b.textContent="Cosa comprare?";
+};
+function migraKb(){const k=lsn("kb",null);if(k!==null&&!k.includes("LAYERING"))ls("kb",k+"\n\n"+DEF_LAYER)}
+function getWorn(){try{return JSON.parse(ls("worn")||"{}")}catch(e){return {}}}
+$("#azzera").onclick=()=>{ls("worn","{}");alert("Cronologia azzerata.")};
+$("#salvaopz").onclick=()=>{ls("key",$("#key").value.trim());ls("model",$("#model").value.trim()||"gemini-2.5-flash");ls("prof",$("#prof").value);ls("master",$("#master").value);ls("kb",$("#kb").value);alert("Salvato.")};
+$("#export").onclick=async()=>{
+ const capi=await all();
+ const dati={versione:2,capi,impostazioni:{model:ls("model"),prof:ls("prof"),master:lsn("master",DEF_MASTER),kb:lsn("kb",DEF_KB),worn:getWorn()}};
+ const a=document.createElement("a");
+ a.href=URL.createObjectURL(new Blob([JSON.stringify(dati)],{type:"application/json"}));
+ a.download="guardaroba-backup.json";a.click();
+};
+
+$("#import").onchange=async e=>{
+ const f=e.target.files[0];e.target.value="";if(!f)return;
+ let d;
+ try{d=JSON.parse(await f.text())}catch(err){alert("File non valido.");return}
+ const capi=Array.isArray(d)?d:d.capi;
+ if(!Array.isArray(capi)||!capi.every(c=>c&&c.img&&c.nome)){alert("Il file non contiene capi validi.");return}
+ const sostituisci=confirm("Il backup contiene "+capi.length+" capi.\nOK = sostituisci i capi attuali\nAnnulla = aggiungi a quelli esistenti");
+ if(sostituisci)await clearAll();
+ const esistenti=sostituisci?[]:await all();
+ const mappa={};let agg=0;
+ for(const c of capi){
+  const dup=esistenti.find(x=>x.img===c.img&&x.nome===c.nome);
+  if(dup){mappa[c.id]=dup.id;continue}
+  const {id,...resto}=c;
+  mappa[id]=await put(resto);agg++;
+ }
+ const imp=d.impostazioni;
+ if(imp&&confirm("Importare anche misure, master prompt, knowledge base e cronologia dei capi indossati?\nLa API key non viene importata.")){
+  if(typeof imp.prof==="string")ls("prof",imp.prof);
+  if(typeof imp.model==="string"&&imp.model)ls("model",imp.model);
+  if(typeof imp.master==="string")ls("master",imp.master);
+  if(typeof imp.kb==="string")ls("kb",imp.kb);
+  const w=sostituisci?{}:getWorn();
+  for(const k in (imp.worn||{})){if(mappa[k]!==undefined)w[mappa[k]]=imp.worn[k]}
+  ls("worn",JSON.stringify(w));
+  migraKb();$("#prof").value=ls("prof");$("#model").value=ls("model")||"gemini-2.5-flash";
+  $("#master").value=lsn("master",DEF_MASTER);$("#kb").value=lsn("kb",DEF_KB);kbInfo();
+ }
+ await render();
+ alert("Importazione completata: "+agg+" capi aggiunti.");
+};
+
+
+
+$("#chiedi").onclick=async()=>{
+ const key=ls("key"),model=ls("model")||"gemini-2.5-flash",out=$("#out");
+ if(!key){alert("Inserisci la API key in Impostazioni.");return}
+ if(items.length<2){alert("Aggiungi almeno due capi.");return}
+ out.classList.remove("hide");out.textContent="Analizzo il guardaroba...";$("#worn").innerHTML="";
+ const kbt=lsn("kb",DEF_KB).trim();
+ const sys=lsn("master",DEF_MASTER)+(kbt?"\n\nBASE DI CONOSCENZA (usala come riferimento principale):\n"+kbt:"");
+ const foto=$("#modo").value==="foto",max=foto?40:150;
+ let use=items.slice(0,max);
+ const base=items.find(i=>i.id===baseId);
+ if(base&&!use.includes(base))use=[base,...use.slice(0,max-1)];
+ const bn=base?use.indexOf(base)+1:0;
+ const worn=getWorn(),rot=$("#ruota").checked,now=Date.now();
+ const nota=i=>{if(!rot||!worn[i.id])return "";const g=Math.floor((now-worn[i.id])/864e5);return g<=7?` [indossato ${g===0?"oggi":g+" giorni fa"}]`:""};
+ const ruota=rot?"\nRotazione: privilegia i capi senza nota [indossato] e quelli usati meno di recente; evita i capi indossati da pochi giorni se esistono alternative valide. I tre outfit devono essere diversi tra loro e non riusare lo stesso capo (tranne l'eventuale capo di partenza) in più di un outfit.":"\nI tre outfit devono essere diversi tra loro.";
+ const layer="\nLayering: descrivi ogni outfit per strati (base, intermedio se serve, esterno se serve, parte inferiore, scarpe) e scegli il numero di strati in base alla temperatura indicata. Verifica che gli strati stiano bene insieme per spessore, lunghezze, volumi e colori.";
+ const fmt="\nAlla fine aggiungi una riga esatta, senza altro testo, nel formato: CAPI: 1,4,7 | 2,5,8 | 3,6,9 (i numeri dei capi di ciascun outfit, nello stesso ordine).";
+ const vincolo=base?`\nVincolo: ogni outfit deve includere obbligatoriamente il capo #${bn} (${base.nome}) come pezzo di partenza. Costruisci gli abbinamenti attorno a lui.`:"";
+ const parts=[{text:"Crea gli outfit usando solo i capi elencati, indicati con un numero."+(foto?"":"\nLe immagini non sono allegate: basati sulle descrizioni testuali.")+"\nSe il colore indicato e la descrizione differiscono, vale il colore indicato dall'utente."+vincolo+ruota+layer+fmt+"\n\nProfilo: "+(ls("prof")||"non indicato")+"\nContesto: "+$("#ctx").value+"\nMomento: "+$("#mom").value+"\nTemperatura: "+$("#temp").value+"\nStile: "+$("#stile").value+"\nAltre richieste: "+($("#occ").value||"nessuna")+"\nAdatta formalità, colori e materiali al contesto e alla luce del momento."+"\n\nCapi:"}];
+ use.forEach((i,n)=>{
+  parts.push({text:`\n#${n+1} ${i.nome} (${i.cat}, ${i.col}; tag: ${i.tag})${i.desc?". "+i.desc:""}${nota(i)}`});
+  if(foto)parts.push({inline_data:{mime_type:"image/jpeg",data:i.img.split(",")[1]}});
+ });
+ try{
+  const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,{method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":key},body:JSON.stringify({system_instruction:{parts:[{text:sys}]},contents:[{role:"user",parts}]})});
+  const d=await r.json();
+  if(!r.ok)throw new Error(d.error?.message||r.status);
+  const t=(d.candidates?.[0]?.content?.parts||[]).map(p=>p.text||"").join("");
+  const m=t.match(/^\s*CAPI:\s*(.+)$/m);
+  const testo=t.replace(/^\s*CAPI:.*$/m,"").trim();
+  out.innerHTML=esc(testo||"Nessuna risposta.").replace(/\*\*(.+?)\*\*/g,"<b>$1</b>");
+  const w=$("#worn");w.innerHTML="";
+  if(m)m[1].split("|").forEach((g,k)=>{
+   const ids=(g.match(/\d+/g)||[]).map(x=>use[+x-1]?.id).filter(x=>x!==undefined);
+   if(!ids.length)return;
+   const b=document.createElement("button");b.className="btn sec";b.textContent=`Indosso l'outfit ${k+1}`;
+   b.onclick=()=>{const o=getWorn();ids.forEach(id=>o[id]=Date.now());ls("worn",JSON.stringify(o));b.disabled=true;b.textContent=`Outfit ${k+1} segnato come indossato`};
+   w.appendChild(b);
+  });
+ }catch(e){out.textContent="Errore: "+e.message}
+};
+
+(async()=>{
+ try{db=await open()}catch(e){alert("Archivio non disponibile: "+e);return}
+ $("#key").value=ls("key");$("#model").value=ls("model")||"gemini-2.5-flash";migraKb();$("#prof").value=ls("prof");$("#master").value=lsn("master",DEF_MASTER);$("#kb").value=lsn("kb",DEF_KB);kbInfo();
+ render();
+})();
+</script>
+</body>
+</html>
